@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Q&A Tool</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 30px;
+    }
+
+    #question {
+      width: 100%;
+      height: 60px;
+      padding: 10px;
+      font-size: 16px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+    }
+
+    #submit, #clear {
+      margin-top: 10px;
+      padding: 10px;
+      font-size: 16px;
+      border: none;
+      border-radius: 5px;
+      color: white;
+      background-color: #007BFF;
+      cursor: pointer;
+    }
+
+    #submit:hover, #clear:hover {
+      background-color: #0056b3;
+    }
+
+    #answer {
+      width: 100%;
+      height: 200px;
+      padding: 10px;
+      margin-top: 10px;
+      font-size: 16px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+    }
+
+    #submit:disabled, #clear:disabled {
+      background-color: #ccc;
+    }
+
+    #button-container {
+      display: flex;
+      align-items: center;
+    }
+
+    #loading {
+      display: none;
+      margin-top: 10px;
+      border: 4px solid #f3f3f3;
+      border-top: 4px solid #3498db;
+      border-radius: 50%;
+      width: 20px;
+      height: 20px;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      0% {
+        transform: rotate(0deg);
+      }
+      100% {
+        transform: rotate(360deg);
+      }
+    }
+
+    #history {
+      margin-top: 20px;
+    }
+
+    .history-item {
+      margin-bottom: 10px;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+  </style>
+  <link rel="stylesheet" href="qa-bot.css">
+  <script src="qa-bot.js"></script>
+</head>
+<body>
+<input type="text" id="question" placeholder="Type your question here">
+<div id="button-container">
+  <button id="submit" disabled>Submit</button>
+  <div id="loading"></div>
+</div>
+<textarea id="answer" readonly></textarea>
+<div id="related-files"></div>
+
+<button id="clear" disabled>Clear history</button>
+<div id="history"></div>
+
+<script>
+  QABot.initialize({
+    "serverUrl": "qa",
+    "documentSiteUrlPrefix": "https://www.apolloconfig.com/#"
+  });
+
+  const history = [];
+  let submitting = false;
+
+  document.getElementById('question').addEventListener('input', function () {
+    const question = document.getElementById('question').value.trim();
+    if (!submitting) {
+      document.getElementById('submit').disabled = question === '';
+    }
+  });
+
+  document.getElementById('submit').addEventListener('click', function () {
+    const question = document.getElementById('question').value.trim();
+    if (question === '') {
+      return;
+    }
+    submitting = true;
+    const submitButton = document.getElementById('submit');
+    const loading = document.getElementById('loading');
+
+    submitButton.disabled = true;
+    loading.style.display = 'block';
+    document.getElementById('answer').value = '';
+    document.getElementById('related-files').innerHTML = '';
+
+    fetch('qa', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: new URLSearchParams({
+        question: question
+      })
+    })
+    .then(response => response.json())
+    .then(data => {
+      const question = document.getElementById('question').value;
+      document.getElementById('answer').value = data.answer;
+      // Update the related files display
+      const relatedFilesDiv = document.getElementById('related-files');
+      relatedFilesDiv.innerHTML = ''; // Clear the previous related files
+      if (data.relatedFiles.length > 0) {
+        relatedFilesDiv.appendChild(generateRelatedFilesLink(data.relatedFiles));
+      }
+
+      history.push({question, result: data});
+      updateHistory();
+    })
+    .catch(error => {
+      console.error('Error:', error);
+    })
+    .finally(() => {
+      // Re-enable the submit button and hide the loading animation
+      // when the request is complete, whether it succeeded or failed
+      submitting = false;
+      submitButton.disabled = false;
+      loading.style.display = 'none';
+    });
+  });
+
+  document.getElementById('question').addEventListener('keypress', function (e) {
+    // If the key pressed was 'Enter'
+    if (e.key === 'Enter') {
+      // Prevent the default action (in this case, submitting the form)
+      e.preventDefault();
+      // Call the same function as when the submit button is clicked
+      document.getElementById('submit').click();
+    }
+  });
+
+  document.getElementById('clear').addEventListener('click', function () {
+    history.length = 0;
+    updateHistory();
+  });
+
+  function updateHistory() {
+    document.getElementById('clear').disabled = history.length === 0;
+    const historyDiv = document.getElementById('history');
+    historyDiv.innerHTML = '';
+    history.forEach((item, index) => {
+      const historyItemDiv = document.createElement('div');
+      historyItemDiv.className = 'history-item';
+      // Create question and answer paragraphs
+      historyItemDiv.innerHTML = `Q${index + 1}: ${item.question}<br><br>A${index
+      + 1}: ${item.result.answer.replace(/\n/g, '<br>')}`;
+
+      // If there are related files, create a list
+      if (item.result.relatedFiles.length > 0) {
+        historyItemDiv.appendChild(generateRelatedFilesLink(item.result.relatedFiles));
+      }
+      historyDiv.appendChild(historyItemDiv);
+    });
+  }
+
+  function generateRelatedFilesLink(relatedFiles) {
+    const fileList = document.createElement('ul');
+    relatedFiles.forEach(file => {
+      const fileItem = document.createElement('li');
+      fileItem.innerHTML = `<a href="https://www.apolloconfig.com/#${file}" target="_blank">${file}</a>`;
+      fileList.appendChild(fileItem);
+    });
+    return fileList;
+  }
+
+</script>
+</body>
+</html>

@@ -1,0 +1,68 @@
+spring:
+  profiles:
+    group:
+      default: openai,milvus
+
+server:
+  port: 9090
+
+management:
+  endpoints:
+    web:
+      base-path: /
+
+logging:
+  file:
+    name: /opt/logs/qa-bot.log
+
+cors:
+  # the allowed origins for the site that can access the QA bot
+  allowedOrigins:
+    - '*'
+
+markdown:
+  files:
+    # the markdown files location, e.g. for apollo, it's the folder of https://github.com/apolloconfig/apollo/tree/master/docs
+    location: ${markdown_files_location}
+    # the markdown files roots in the documentation site, e.g. for apollo, it's /zh and /en
+    # https://github.com/apolloconfig/apollo/blob/master/docs/zh/design/apollo-design.md => https://www.apolloconfig.com/#/zh/design/apollo-design
+    # https://github.com/apolloconfig/apollo/blob/master/docs/en/design/apollo-design.md => https://www.apolloconfig.com/#/en/design/apollo-design
+    roots:
+      - /zh
+      - /en
+    # whether to enable the markdown files auto update
+    scheduleEnabled: false
+    # the cron expression for the markdown files auto update
+    scheduleCron: 0 0 * * * ? # every hour
+  processor:
+    # the retry configuration when accessing openai failed
+    retry:
+      delay: 10000
+      multiplier: 1.5
+      maxDelay: 120000
+      maxElapsedTime: 600000
+
+milvus:
+  # the milvus database host
+  host: localhost
+  # the milvus database port
+  port: 19530
+  # the milvus database collection name, no need to create it manually
+  collection: docs
+
+qa:
+  # the topK number of chunks retrieved from milvus database
+  topK: 3
+  # the prompt used to generate the answer
+  prompt: |
+    You are an AI assistant for answering questions for apollo, which is a very popular configuration management system suitable for microservice configuration management scenarios.
+    You are given the following extracted parts of a long document and a question. Provide a conversational answer.
+    You need to first determine what language the question is in, and then give the answer in the same language. 
+    If you don't know the answer, just say "Hmm, I'm not sure." Don't try to make up an answer.
+    Only output the answer to the question, with nothing else.
+
+    Question: {question} 
+    =========
+    {context}
+    =========
+    Answer:

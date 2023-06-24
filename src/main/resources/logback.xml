@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+  <property name="LOG_FILE"
+    value="${LOG_FILE:-${LOG_PATH:-${LOG_TEMP:-${java.io.tmpdir:-/tmp}}/}qa-bot.log}"/>
+  <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
+  <include resource="org/springframework/boot/logging/logback/console-appender.xml"/>
+  <include resource="org/springframework/boot/logging/logback/file-appender.xml"/>
+  <if condition='isDefined("LOG_APPENDERS")'>
+    <then>
+      <if condition='property("LOG_APPENDERS").contains("CONSOLE")'>
+        <then>
+          <root level="INFO">
+            <appender-ref ref="CONSOLE"/>
+          </root>
+        </then>
+      </if>
+      <if condition='property("LOG_APPENDERS").contains("FILE")'>
+        <then>
+          <root level="INFO">
+            <appender-ref ref="FILE"/>
+          </root>
+        </then>
+      </if>
+    </then>
+    <else>
+      <root level="INFO">
+        <appender-ref ref="CONSOLE"/>
+      </root>
+    </else>
+  </if>
+  <logger name="com.apolloconfig.apollo.ai.qabot" level="DEBUG"/>
+</configuration>
