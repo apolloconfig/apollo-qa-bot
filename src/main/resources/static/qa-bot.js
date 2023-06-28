@@ -15,6 +15,14 @@
       let botIcon = document.createElement('div');
       botIcon.id = 'qa-bot-icon';
       botIcon.innerHTML = QABot.chatIconSvg;
+
+      let textContainer = document.createElement('div');
+      let text = document.createElement('span');
+      text.textContent = 'Chat with AI';
+
+      textContainer.appendChild(text);
+      botIcon.appendChild(textContainer);
+
       document.body.appendChild(botIcon);
 
       let popupContainer = document.createElement('div');
