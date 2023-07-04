@@ -20,8 +20,10 @@ A smart qa bot that can answer questions based on existing documents.
 #### Edit the `config/application.yaml`
 
 1. Config the `markdown.files.location` to the directory of the markdown files
-2. Config the `milvus.host` and `milvus.port` to the Milvus server
-3. Config other parameters as needed
+2. Config the `markdown.files.scheduleEnabled` to `true` if you want to auto update the markdown files
+3. Config the `milvus.host` and `milvus.port` to the Milvus server
+4. Config the `milvus.useZillzCloud`, `milvus.zillizCloudUri` and `milvus.zillizCloudToken` if you are using Zilliz Cloud
+5. Config other parameters as needed
 
 #### Edit the `qa-bot.conf`
 
@@ -48,19 +50,30 @@ Refer [apollo pr](https://github.com/apolloconfig/apollo/pull/4908/) for an exam
 ```html
 
 <html>
-<head>
-  <!-- add qa bot -->
-  <link rel="stylesheet" href="http://${your-server-url}:9090/qa-bot.css">
-  <script src="http://${your-server-url}:9090/qa-bot.js"></script>
-  <script>
-    QABot.initialize({
-      "serverUrl": "http://${your-server-url}:9090/qa",
-      "documentSiteUrlPrefix": "https://${your-documentation-site-prefix-url}"
-    });
-  </script>
-</head>
-<body>
+    <head>
+      ...
+    </head>
+    <body>
+      ...
+    </body>
+    <!-- add qa bot -->
+    <script>
+      (function() {
+        var link = document.createElement('link');
+        link.rel = 'stylesheet';
+        link.href = 'http://${your-server-url}:9090/qa-bot.css';
+        document.head.appendChild(link);
 
-</body>
+        var script = document.createElement('script');
+        script.src = 'http://${your-server-url}:9090/qa-bot.js';
+        script.onload = function () {
+          QABot.initialize({
+            "serverUrl": "http://${your-server-url}:9090/qa",
+            "documentSiteUrlPrefix": "https://${your-documentation-site-prefix-url}"
+          });
+        };
+        document.body.appendChild(script);
+      })();
+    </script>
 </html>
 ```

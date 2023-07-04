@@ -19,7 +19,7 @@
     <openai-gpt3-java.version>0.12.0</openai-gpt3-java.version>
     <guava.version>31.1-jre</guava.version>
     <flexmark.version>0.62.2</flexmark.version>
-    <milvus.version>2.2.5</milvus.version>
+    <milvus.version>2.2.7</milvus.version>
   </properties>
 
   <dependencyManagement>

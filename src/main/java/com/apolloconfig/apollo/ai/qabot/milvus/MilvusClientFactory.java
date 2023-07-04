@@ -23,9 +23,24 @@ public class MilvusClientFactory {
     return clients.get(key);
   }
 
+  public static MilvusServiceClient getCloudClient(String uri, String token) {
+    if (!clients.containsKey(uri)) {
+      synchronized (INSTANCE) {
+        if (!clients.containsKey(uri)) {
+          clients.put(uri, INSTANCE.createCloudClient(uri, token));
+        }
+      }
+    }
+
+    return clients.get(uri);
+  }
+
   private MilvusServiceClient createClient(String host, int port) {
     return new MilvusServiceClient(
         ConnectParam.newBuilder().withHost(host).withPort(port).build());
   }
 
+  private MilvusServiceClient createCloudClient(String uri, String token) {
+    return new MilvusServiceClient(ConnectParam.newBuilder().withUri(uri).withToken(token).build());
+  }
 }

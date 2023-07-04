@@ -13,6 +13,12 @@ public class MilvusConfig {
   private int port;
   private String collection;
 
+  private boolean useZillzCloud;
+
+  private String zillizCloudUri;
+
+  private String zillizCloudToken;
+
   public String getHost() {
     return host;
   }
@@ -35,5 +41,29 @@ public class MilvusConfig {
 
   public void setCollection(String collection) {
     this.collection = collection;
+  }
+
+  public boolean isUseZillzCloud() {
+    return useZillzCloud;
+  }
+
+  public void setUseZillzCloud(boolean useZillzCloud) {
+    this.useZillzCloud = useZillzCloud;
+  }
+
+  public String getZillizCloudUri() {
+    return zillizCloudUri;
+  }
+
+  public void setZillizCloudUri(String zillizCloudUri) {
+    this.zillizCloudUri = zillizCloudUri;
+  }
+
+  public String getZillizCloudToken() {
+    return zillizCloudToken;
+  }
+
+  public void setZillizCloudToken(String zillizCloudToken) {
+    this.zillizCloudToken = zillizCloudToken;
   }
 }

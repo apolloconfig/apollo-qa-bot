@@ -46,8 +46,14 @@ class MilvusService implements VectorDBService {
 
   public MilvusService(MilvusConfig milvusConfig) {
     this.milvusConfig = milvusConfig;
-    this.milvusServiceClient = MilvusClientFactory.getClient(milvusConfig.getHost(),
-        milvusConfig.getPort());
+    if (milvusConfig.isUseZillzCloud()) {
+      this.milvusServiceClient = MilvusClientFactory.getCloudClient(
+          milvusConfig.getZillizCloudUri(),
+          milvusConfig.getZillizCloudToken());
+    } else {
+      this.milvusServiceClient = MilvusClientFactory.getClient(milvusConfig.getHost(),
+          milvusConfig.getPort());
+    }
     this.ensureCollections();
   }
 

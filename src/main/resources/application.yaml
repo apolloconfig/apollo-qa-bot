@@ -47,6 +47,12 @@ milvus:
   host: localhost
   # the milvus database port
   port: 19530
+  # whether to use the milvus database cloud
+  useZillzCloud: false
+  # the zilliz cloud uri
+  zillizCloudUri: https://xxx.zillizcloud.com
+  # the zilliz cloud token
+  zillizCloudToken: xxxxxxxxxxxx
   # the milvus database collection name, no need to create it manually
   collection: docs
 
