@@ -95,3 +95,23 @@
     transform: rotate(360deg);
   }
 }
+
+#qa-bot-powered-by {
+  font-size: 12px;
+  margin-top: 10px;
+  text-align: center;
+}
+
+#qa-bot-powered-by a {
+  color: #777;
+  text-decoration: none;
+}
+
+#qa-bot-powered-by a:hover {
+  text-decoration: underline;
+}
+
+#qa-bot-powered-by svg {
+  vertical-align: middle;
+  margin-right: 5px;
+}
