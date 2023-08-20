@@ -55,6 +55,7 @@ milvus:
   zillizCloudToken: xxxxxxxxxxxx
   # the milvus database collection name, no need to create it manually
   collection: docs
+  fileCollection: files
 
 qa:
   # the topK number of chunks retrieved from milvus database

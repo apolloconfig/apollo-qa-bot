@@ -5,9 +5,9 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.google.common.collect.Lists;
 import com.apolloconfig.apollo.ai.qabot.config.MarkdownFilesConfig;
 import com.apolloconfig.apollo.ai.qabot.markdown.MarkdownProcessor;
+import com.google.common.collect.Lists;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

@@ -13,6 +13,8 @@ public class MilvusConfig {
   private int port;
   private String collection;
 
+  private String fileCollection;
+
   private boolean useZillzCloud;
 
   private String zillizCloudUri;
@@ -29,6 +31,14 @@ public class MilvusConfig {
 
   public String getCollection() {
     return collection;
+  }
+
+  public String getFileCollection() {
+    return fileCollection;
+  }
+
+  public void setFileCollection(String fileCollection) {
+    this.fileCollection = fileCollection;
   }
 
   public void setHost(String host) {

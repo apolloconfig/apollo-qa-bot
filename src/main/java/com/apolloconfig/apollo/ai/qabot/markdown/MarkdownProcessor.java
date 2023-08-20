@@ -11,7 +11,6 @@ import com.vladsch.flexmark.parser.Parser;
 import com.vladsch.flexmark.util.ast.Document;
 import com.vladsch.flexmark.util.ast.Node;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -20,6 +19,7 @@ import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Stream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -38,7 +38,6 @@ public class MarkdownProcessor {
   private final MarkdownProcessorRetryConfig markdownProcessorRetryConfig;
   private final AiService aiService;
   private final VectorDBService vectorDBService;
-  private final Map<String, String> hashValueMap = Maps.newConcurrentMap();
   private final BackOff backOff;
 
   public MarkdownProcessor(MarkdownFilesConfig markdownFilesConfig,
@@ -120,11 +119,12 @@ public class MarkdownProcessor {
   boolean processFile(Path mdFile) throws IOException {
     String fileRoot = getMarkdownFileRoots(mdFile);
 
-    String markdownContent = new String(Files.readAllBytes(mdFile), StandardCharsets.UTF_8);
+    String markdownContent = Files.readString(mdFile);
     String hashValue = computeHash(markdownContent);
 
-    // we could store the hash value in the database
-    if (hashValueMap.containsKey(fileRoot) && hashValueMap.get(fileRoot).equals(hashValue)) {
+    String fileHashValue = vectorDBService.queryFileHashValue(fileRoot);
+
+    if (Objects.equals(hashValue, fileHashValue)) {
       return false;
     }
 
@@ -137,7 +137,7 @@ public class MarkdownProcessor {
 
     vectorDBService.persistChunkEmbeddings(fileRoot, chunks, embeddings);
 
-    hashValueMap.put(fileRoot, hashValue);
+    vectorDBService.persistFile(fileRoot, hashValue);
 
     return true;
   }

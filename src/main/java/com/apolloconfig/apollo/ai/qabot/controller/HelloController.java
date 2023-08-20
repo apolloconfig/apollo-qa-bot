@@ -26,9 +26,7 @@ public class HelloController {
     ChatMessage userMessage = new ChatMessage(ChatMessageRole.USER.value(),
         "write a brief greeting for " + name);
 
-    String result = aiService.getCompletionFromMessages(
+    return aiService.getCompletionFromMessages(
         Lists.newArrayList(systemMessage, userMessage));
-
-    return result;
   }
 }

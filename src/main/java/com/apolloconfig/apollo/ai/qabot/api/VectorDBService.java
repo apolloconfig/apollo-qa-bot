@@ -10,4 +10,8 @@ public interface VectorDBService {
       List<Embedding> embeddings);
 
   List<MarkdownSearchResult> search(List<List<Float>> searchVectors, int topK);
+
+  String queryFileHashValue(String fileRoot);
+
+  void persistFile(String fileRoot, String hashValue);
 }

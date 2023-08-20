@@ -12,11 +12,11 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.google.common.collect.Lists;
 import com.apolloconfig.apollo.ai.qabot.api.AiService;
 import com.apolloconfig.apollo.ai.qabot.api.VectorDBService;
 import com.apolloconfig.apollo.ai.qabot.controller.QAController.Answer;
 import com.apolloconfig.apollo.ai.qabot.markdown.MarkdownSearchResult;
+import com.google.common.collect.Lists;
 import com.theokanning.openai.embedding.Embedding;
 import java.util.Collections;
 import java.util.List;
