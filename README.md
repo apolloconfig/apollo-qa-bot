@@ -6,7 +6,7 @@ A smart qa bot that can answer questions based on existing documents.
 
 ### Prerequisites
 
-1. Java 1.8+
+1. Java 17+
 2. Milvus 2.2.0+
 
 ### Installation
