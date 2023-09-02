@@ -77,6 +77,10 @@
   cursor: pointer;
 }
 
+#qa-bot-submit-button:disabled {
+  background-color: #ccc;
+}
+
 #qa-bot-loading-icon {
   display: none;
   border: 4px solid #f3f3f3;

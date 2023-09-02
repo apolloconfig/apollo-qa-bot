@@ -7,7 +7,7 @@ import static com.theokanning.openai.service.OpenAiService.defaultRetrofit;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Strings;
 import com.google.common.collect.Maps;
-import com.theokanning.openai.OpenAiApi;
+import com.theokanning.openai.client.OpenAiApi;
 import com.theokanning.openai.service.OpenAiService;
 import java.io.IOException;
 import java.net.InetAddress;

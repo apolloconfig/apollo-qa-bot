@@ -28,7 +28,7 @@ class MarkdownControllerTest {
   @InjectMocks
   private MarkdownController markdownControllerUnderTest;
 
-  private String someLocation = "location";
+  private final String someLocation = "location";
 
   @BeforeEach
   void setUp() {

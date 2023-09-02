@@ -16,10 +16,17 @@ import com.apolloconfig.apollo.ai.qabot.api.AiService;
 import com.apolloconfig.apollo.ai.qabot.api.VectorDBService;
 import com.apolloconfig.apollo.ai.qabot.controller.QAController.Answer;
 import com.apolloconfig.apollo.ai.qabot.markdown.MarkdownSearchResult;
+import com.google.common.base.Function;
 import com.google.common.collect.Lists;
+import com.theokanning.openai.completion.chat.ChatCompletionChoice;
+import com.theokanning.openai.completion.chat.ChatCompletionChunk;
+import com.theokanning.openai.completion.chat.ChatMessage;
 import com.theokanning.openai.embedding.Embedding;
+import io.reactivex.Flowable;
+import java.time.Duration;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 import org.assertj.core.util.Sets;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -29,6 +36,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
+import reactor.core.publisher.Flux;
 
 @ExtendWith(MockitoExtension.class)
 class QAControllerTest {
@@ -51,6 +59,8 @@ class QAControllerTest {
 
   private Embedding someEmbedding;
 
+  private Duration timeout;
+
   @BeforeEach
   void setUp() {
     somePrompt = "somePrompt";
@@ -65,13 +75,15 @@ class QAControllerTest {
 
     ReflectionTestUtils.setField(qaController, "prompt", somePrompt);
     ReflectionTestUtils.setField(qaController, "topK", someTopK);
+
+    timeout = Duration.ofMillis(100);
   }
 
   @Test
   void testQAWithEmptyQuestion() {
     someQuestion = " ";
 
-    Answer answer = qaController.qa(someQuestion);
+    Answer answer = qaController.qa(someQuestion).blockFirst(timeout);
 
     assertSame(Answer.EMPTY, answer);
     verify(aiService, never()).getEmbeddings(anyList());
@@ -85,7 +97,7 @@ class QAControllerTest {
 
     when(aiService.getEmbeddings(questionList)).thenThrow(new RuntimeException("some exception"));
 
-    Answer answer = qaController.qa(someQuestion);
+    Answer answer = qaController.qa(someQuestion).blockFirst(timeout);
 
     assertSame(Answer.ERROR, answer);
     verify(aiService, times(1)).getEmbeddings(questionList);
@@ -99,7 +111,7 @@ class QAControllerTest {
     when(aiService.getEmbeddings(questionList)).thenReturn(someEmbeddings);
     when(vectorDBService.search(anyList(), anyInt())).thenReturn(Lists.newArrayList());
 
-    Answer answer = qaController.qa(someQuestion);
+    Answer answer = qaController.qa(someQuestion).blockFirst(timeout);
 
     assertSame(Answer.UNKNOWN, answer);
     verify(aiService, times(1)).getEmbeddings(questionList);
@@ -127,15 +139,36 @@ class QAControllerTest {
     List<Embedding> someEmbeddings = Lists.newArrayList(someEmbedding);
     List<List<Float>> searchVectors = Collections.singletonList(originalEmbeddingValues);
     String someAnswer = "someAnswer";
+    String anotherAnswer = "anotherAnswer";
+    Flowable<ChatCompletionChunk> someChatCompletionChunk = Flowable.just(
+        mockChatCompletionChunk(someAnswer), mockChatCompletionChunk(anotherAnswer));
 
     when(aiService.getEmbeddings(questionList)).thenReturn(someEmbeddings);
     when(vectorDBService.search(searchVectors, someTopK)).thenReturn(
         Lists.newArrayList(someMarkdownSearchResult, anotherMarkdownSearchResult));
-    when(aiService.getCompletion(somePrompt)).thenReturn(someAnswer);
+    when(aiService.getCompletion(somePrompt)).thenReturn(someChatCompletionChunk);
 
-    Answer answer = qaController.qa(someQuestion);
+    Set<String> relatedFiles = Sets.newLinkedHashSet();
 
-    assertEquals(someAnswer, answer.getAnswer());
-    assertEquals(Sets.newLinkedHashSet(someFileRoot, anotherFileRoot), answer.getRelatedFiles());
+    Flux<Answer> answer = qaController.qa(someQuestion);
+
+    String result = answer.map((Function<Answer, String>) input -> {
+      relatedFiles.addAll(input.relatedFiles());
+      return input.answer();
+    }).collect(StringBuilder::new, StringBuilder::append)
+        .map(StringBuilder::toString).block(timeout);
+
+    assertEquals(someAnswer+anotherAnswer+Answer.END.answer(), result);
+    assertEquals(Sets.newLinkedHashSet(someFileRoot, anotherFileRoot), relatedFiles);
+  }
+
+  private ChatCompletionChunk mockChatCompletionChunk(String content) {
+    ChatCompletionChunk chatCompletionChunk = mock(ChatCompletionChunk.class);
+    ChatCompletionChoice chatCompletionChoice = mock(ChatCompletionChoice.class);
+    ChatMessage chatMessage = mock(ChatMessage.class);
+    when(chatMessage.getContent()).thenReturn(content);
+    when(chatCompletionChunk.getChoices()).thenReturn(Lists.newArrayList(chatCompletionChoice));
+    when(chatCompletionChoice.getMessage()).thenReturn(chatMessage);
+    return chatCompletionChunk;
   }
 }
