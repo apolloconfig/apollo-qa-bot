@@ -127,42 +127,57 @@
     document.getElementById('answer').value = '';
     document.getElementById('related-files').innerHTML = '';
 
-    fetch('qa', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-      body: new URLSearchParams({
-        question: question
-      })
-    })
-    .then(response => response.json())
-    .then(data => {
-      const question = document.getElementById('question').value;
-      document.getElementById('answer').value = data.answer;
+    let relatedFilesData;
+    let result = {answer: '', relatedFiles: []};
+    let eventSource = new EventSource('qa?question=' + encodeURIComponent(question));
+
+    eventSource.onmessage = function (event) {
+      let data = JSON.parse(event.data);
+      if (!relatedFilesData && data.relatedFiles && data.relatedFiles.length > 0) {
+        relatedFilesData = data.relatedFiles;
+      }
+      // Append answer to botMessage
+      if (data.answer) {
+        // end of stream response
+        if (data.answer === '$END$') {
+          finish();
+        } else {
+          document.getElementById('answer').value += data.answer;
+          result.answer += data.answer;
+        }
+      }
+    };
+
+    eventSource.onerror = function (error) {
+      console.error('Error:', error);
+      reset();
+    };
+
+    function finish() {
       // Update the related files display
-      const relatedFilesDiv = document.getElementById('related-files');
-      relatedFilesDiv.innerHTML = ''; // Clear the previous related files
-      if (data.relatedFiles.length > 0) {
-        relatedFilesDiv.appendChild(generateRelatedFilesLink(data.relatedFiles));
+      if (relatedFilesData) {
+        result.relatedFiles = relatedFilesData
+        document.getElementById('related-files').appendChild(
+            generateRelatedFilesLink(relatedFilesData));
       }
 
-      history.push({question, result: data});
+      history.push({question, result: result});
       updateHistory();
-    })
-    .catch(error => {
-      console.error('Error:', error);
-    })
-    .finally(() => {
+
+      reset();
+    }
+
+    function reset() {
+      eventSource.close();
       // Re-enable the submit button and hide the loading animation
       // when the request is complete, whether it succeeded or failed
       submitting = false;
       submitButton.disabled = false;
       loading.style.display = 'none';
-    });
+    }
   });
 
-  document.getElementById('question').addEventListener('keypress', function (e) {
+  document.getElementById('question').addEventListener('keyup', function (e) {
     // If the key pressed was 'Enter'
     if (e.key === 'Enter') {
       // Prevent the default action (in this case, submitting the form)

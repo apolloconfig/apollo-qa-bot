@@ -1,11 +1,14 @@
 package com.apolloconfig.apollo.ai.qabot.config;
 
+import java.util.concurrent.TimeUnit;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.web.servlet.config.annotation.CorsRegistry;
-import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+import org.springframework.http.CacheControl;
+import org.springframework.web.reactive.config.CorsRegistry;
+import org.springframework.web.reactive.config.ResourceHandlerRegistry;
+import org.springframework.web.reactive.config.WebFluxConfigurer;
 
 @Configuration
-public class WebConfig implements WebMvcConfigurer {
+public class WebConfig implements WebFluxConfigurer {
 
   private final CorsProperties corsProperties;
 
@@ -15,9 +18,15 @@ public class WebConfig implements WebMvcConfigurer {
 
   @Override
   public void addCorsMappings(CorsRegistry registry) {
-    registry.addMapping("/**")
+    registry.addMapping("/qa/**")
         .allowedOrigins(corsProperties.getAllowedOrigins())
-        .allowedMethods("POST");
+        .allowedMethods("GET", "POST");
   }
 
+  @Override
+  public void addResourceHandlers(ResourceHandlerRegistry registry) {
+    registry.addResourceHandler("/**")
+        .addResourceLocations("classpath:/static/")
+        .setCacheControl(CacheControl.maxAge(1, TimeUnit.DAYS));
+  }
 }

@@ -1,12 +1,14 @@
 package com.apolloconfig.apollo.ai.qabot.openai;
 
-import com.google.common.collect.Lists;
 import com.apolloconfig.apollo.ai.qabot.api.AiService;
+import com.google.common.collect.Lists;
+import com.theokanning.openai.completion.chat.ChatCompletionChunk;
 import com.theokanning.openai.completion.chat.ChatCompletionRequest;
 import com.theokanning.openai.completion.chat.ChatMessage;
 import com.theokanning.openai.completion.chat.ChatMessageRole;
 import com.theokanning.openai.embedding.Embedding;
 import com.theokanning.openai.embedding.EmbeddingRequest;
+import io.reactivex.Flowable;
 import java.util.List;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
@@ -24,20 +26,22 @@ class OpenAiService implements AiService {
     service = OpenAiServiceFactory.getService(System.getenv("OPENAI_API_KEY"));
   }
 
-  public String getCompletion(String prompt) {
+  public Flowable<ChatCompletionChunk> getCompletion(String prompt) {
     ChatMessage message = new ChatMessage(ChatMessageRole.USER.value(), prompt);
     return getCompletionFromMessages(Lists.newArrayList(message));
   }
 
-  public String getCompletionFromMessages(List<ChatMessage> messages) {
+  public Flowable<ChatCompletionChunk> getCompletionFromMessages(List<ChatMessage> messages) {
     return getCompletionFromMessages(messages, 0.0);
   }
 
-  public String getCompletionFromMessages(List<ChatMessage> messages, double temperature) {
+  public Flowable<ChatCompletionChunk> getCompletionFromMessages(List<ChatMessage> messages,
+      double temperature) {
     return getCompletionFromMessages(messages, DEFAULT_MODEL, temperature, 500);
   }
 
-  public String getCompletionFromMessages(List<ChatMessage> messages, String model,
+  public Flowable<ChatCompletionChunk> getCompletionFromMessages(List<ChatMessage> messages,
+      String model,
       double temperature, int maxTokens) {
     ChatCompletionRequest chatCompletionRequest = ChatCompletionRequest
         .builder()
@@ -47,8 +51,7 @@ class OpenAiService implements AiService {
         .maxTokens(maxTokens)
         .build();
 
-    return service.createChatCompletion(chatCompletionRequest).getChoices().get(0).getMessage()
-        .getContent();
+    return service.streamChatCompletion(chatCompletionRequest);
   }
 
   public List<Embedding> getEmbeddings(List<String> chunks) {
