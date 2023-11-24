@@ -34,20 +34,30 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 import java.util.stream.Collectors;
+import org.crac.Context;
+import org.crac.Resource;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
 @Profile("milvus")
 @Service
-class MilvusService implements VectorDBService {
+class MilvusService implements VectorDBService, Resource {
 
-  private final MilvusServiceClient milvusServiceClient;
+  private static final Logger LOGGER = LoggerFactory.getLogger(MilvusService.class);
+
+  private MilvusServiceClient milvusServiceClient;
   private final MilvusConfig milvusConfig;
   private final List<Float> dummyEmbeddings = Lists.newArrayList();
 
   public MilvusService(MilvusConfig milvusConfig) {
     this.milvusConfig = milvusConfig;
+    this.init();
+  }
+
+  private void init() {
     if (milvusConfig.isUseZillzCloud()) {
       this.milvusServiceClient = MilvusClientFactory.getCloudClient(
           milvusConfig.getZillizCloudUri(),
@@ -413,4 +423,16 @@ class MilvusService implements VectorDBService {
     );
   }
 
+  @Override
+  public void beforeCheckpoint(Context<? extends Resource> context) throws Exception {
+    LOGGER.info("beforeCheckpoint");
+    this.milvusServiceClient = null;
+  }
+
+  @Override
+  public void afterRestore(Context<? extends Resource> context) throws Exception {
+    LOGGER.info("afterRestore");
+    this.init();
+    LOGGER.info("afterRestore done");
+  }
 }

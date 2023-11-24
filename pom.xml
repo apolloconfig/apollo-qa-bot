@@ -6,7 +6,7 @@
   <parent>
     <groupId>org.springframework.boot</groupId>
     <artifactId>spring-boot-starter-parent</artifactId>
-    <version>3.1.3</version>
+    <version>3.2.0</version>
     <relativePath/> <!-- lookup parent from repository -->
   </parent>
   <groupId>com.apolloconfig.apollo.ai</groupId>
@@ -16,10 +16,13 @@
   <description>a smart qa bot</description>
   <properties>
     <java.version>17</java.version>
-    <openai-gpt3-java.version>0.16.0</openai-gpt3-java.version>
-    <guava.version>32.1.2-jre</guava.version>
+    <openai-gpt3-java.version>0.18.2</openai-gpt3-java.version>
+    <guava.version>32.1.3-jre</guava.version>
     <flexmark.version>0.64.8</flexmark.version>
-    <milvus.version>2.3.0</milvus.version>
+    <milvus.version>2.3.3</milvus.version>
+    <!-- There is a bug in 4.1.101.Final -->
+    <netty.codec.http2.version>4.1.100.Final</netty.codec.http2.version>
+    <crac.version>1.4.0</crac.version>
   </properties>
 
   <dependencyManagement>
@@ -43,6 +46,16 @@
         <groupId>io.milvus</groupId>
         <artifactId>milvus-sdk-java</artifactId>
         <version>${milvus.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>io.netty</groupId>
+        <artifactId>netty-codec-http2</artifactId>
+        <version>${netty.codec.http2.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.crac</groupId>
+        <artifactId>crac</artifactId>
+        <version>${crac.version}</version>
       </dependency>
     </dependencies>
   </dependencyManagement>
@@ -81,6 +94,10 @@
           <groupId>org.apache.logging.log4j</groupId>
         </exclusion>
       </exclusions>
+    </dependency>
+    <dependency>
+      <groupId>org.crac</groupId>
+      <artifactId>crac</artifactId>
     </dependency>
 
     <dependency>

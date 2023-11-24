@@ -4,8 +4,10 @@ import com.google.common.collect.Maps;
 import io.milvus.client.MilvusServiceClient;
 import io.milvus.param.ConnectParam;
 import java.util.Map;
+import org.crac.Context;
+import org.crac.Resource;
 
-public class MilvusClientFactory {
+public class MilvusClientFactory implements Resource {
 
   private static final MilvusClientFactory INSTANCE = new MilvusClientFactory();
   private static final Map<String, MilvusServiceClient> clients = Maps.newConcurrentMap();
@@ -42,5 +44,15 @@ public class MilvusClientFactory {
 
   private MilvusServiceClient createCloudClient(String uri, String token) {
     return new MilvusServiceClient(ConnectParam.newBuilder().withUri(uri).withToken(token).build());
+  }
+
+  @Override
+  public void beforeCheckpoint(Context<? extends Resource> context) throws Exception {
+    clients.clear();
+  }
+
+  @Override
+  public void afterRestore(Context<? extends Resource> context) throws Exception {
+
   }
 }
