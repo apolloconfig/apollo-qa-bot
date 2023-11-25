@@ -23,9 +23,11 @@ import javax.net.ssl.SSLSocketFactory;
 import okhttp3.Authenticator;
 import okhttp3.Credentials;
 import okhttp3.OkHttpClient;
+import org.crac.Context;
+import org.crac.Resource;
 import retrofit2.Retrofit;
 
-public class OpenAiServiceFactory {
+public class OpenAiServiceFactory implements Resource {
 
   private static final Duration DEFAULT_TIMEOUT = Duration.ofSeconds(60);
 
@@ -83,6 +85,16 @@ public class OpenAiServiceFactory {
         .proxyAuthenticator(proxyAuthenticator)
         .socketFactory(new DelegatingSocketFactory(SSLSocketFactory.getDefault()))
         .build();
+  }
+
+  @Override
+  public void beforeCheckpoint(Context<? extends Resource> context) throws Exception {
+    SERVICES.clear();
+  }
+
+  @Override
+  public void afterRestore(Context<? extends Resource> context) throws Exception {
+
   }
 
   private static class DelegatingSocketFactory extends SocketFactory {

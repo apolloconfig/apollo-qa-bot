@@ -10,19 +10,25 @@ import com.theokanning.openai.embedding.Embedding;
 import com.theokanning.openai.embedding.EmbeddingRequest;
 import io.reactivex.Flowable;
 import java.util.List;
+import org.crac.Context;
+import org.crac.Resource;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
 @Profile("openai")
 @Component
-class OpenAiService implements AiService {
+class OpenAiService implements AiService, Resource {
 
   private static final String DEFAULT_MODEL = "gpt-3.5-turbo";
   private static final String DEFAULT_EMBEDDING_MODEL = "text-embedding-ada-002";
 
-  private final com.theokanning.openai.service.OpenAiService service;
+  private com.theokanning.openai.service.OpenAiService service;
 
   public OpenAiService() {
+    init();
+  }
+
+  private void init() {
     service = OpenAiServiceFactory.getService(System.getenv("OPENAI_API_KEY"));
   }
 
@@ -59,5 +65,15 @@ class OpenAiService implements AiService {
         .input(chunks).build();
 
     return service.createEmbeddings(embeddingRequest).getData();
+  }
+
+  @Override
+  public void beforeCheckpoint(Context<? extends Resource> context) throws Exception {
+    this.service = null;
+  }
+
+  @Override
+  public void afterRestore(Context<? extends Resource> context) throws Exception {
+    this.init();
   }
 }
