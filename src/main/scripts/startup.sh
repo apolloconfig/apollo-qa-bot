@@ -19,12 +19,26 @@ SERVICE_NAME=qa-bot
 LOG_DIR=/opt/logs
 ## Adjust server port if necessary
 SERVER_PORT=${SERVER_PORT:=9090}
+## Adjust crac files dir if necessary
+CRAC_FILES_DIR=/opt/crac
 
 ## Create log directory if not existed because JDK 8+ won't do that
 mkdir -p $LOG_DIR
 
+mkdir -p $CRAC_FILES_DIR
+
 ## Adjust memory settings if necessary
 #export JAVA_OPTS="-Xms2560m -Xmx2560m -Xss256k -XX:MetaspaceSize=128m -XX:MaxMetaspaceSize=384m -XX:NewSize=1536m -XX:MaxNewSize=1536m -XX:SurvivorRatio=8"
+
+# Check for 'checkpoint' argument
+if [ "$1" = "checkpoint" ]; then
+    export JAVA_OPTS="$JAVA_OPTS -Dspring.context.checkpoint=onRefresh -XX:CRaCCheckpointTo=$CRAC_FILES_DIR"
+fi
+
+# Check for 'restore' argument
+if [ "$1" = "restore" ]; then
+    export JAVA_OPTS="$JAVA_OPTS -XX:CRaCRestoreFrom=$CRAC_FILES_DIR"
+fi
 
 ## Only uncomment the following when you are using server jvm
 export JAVA_OPTS="$JAVA_OPTS -server -XX:-ReduceInitialCardMarks"
