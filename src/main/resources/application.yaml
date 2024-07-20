@@ -59,7 +59,7 @@ milvus:
 
 qa:
   # the topK number of chunks retrieved from milvus database
-  topK: 3
+  topK: 5
   # the prompt used to generate the answer
   prompt: |
     You are an AI assistant for answering questions for apollo, which is a very popular configuration management system suitable for microservice configuration management scenarios.

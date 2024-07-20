@@ -17,8 +17,9 @@ import org.springframework.stereotype.Component;
 @Component
 class OpenAiService implements AiService {
 
-  private static final String DEFAULT_MODEL = "gpt-3.5-turbo";
+  private static final String DEFAULT_MODEL = "gpt-4o-mini";
   private static final String DEFAULT_EMBEDDING_MODEL = "text-embedding-ada-002";
+  private static final int DEFAULT_MAX_TOKENS = 5000;
 
   private final com.theokanning.openai.service.OpenAiService service;
 
@@ -37,7 +38,7 @@ class OpenAiService implements AiService {
 
   public Flowable<ChatCompletionChunk> getCompletionFromMessages(List<ChatMessage> messages,
       double temperature) {
-    return getCompletionFromMessages(messages, DEFAULT_MODEL, temperature, 500);
+    return getCompletionFromMessages(messages, DEFAULT_MODEL, temperature, DEFAULT_MAX_TOKENS);
   }
 
   public Flowable<ChatCompletionChunk> getCompletionFromMessages(List<ChatMessage> messages,
