@@ -2,7 +2,7 @@ package com.apolloconfig.apollo.ai.qabot.markdown;
 
 import com.apolloconfig.apollo.ai.qabot.config.MarkdownFilesConfig;
 import com.apolloconfig.apollo.ai.qabot.config.MarkdownProcessorRetryConfig;
-import com.apolloconfig.apollo.ai.qabot.openai.OpenAiAssistantsService;
+import com.apolloconfig.apollo.ai.qabot.openai.OpenAiResponseService;
 import com.google.common.collect.Maps;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -29,14 +29,14 @@ public class MarkdownProcessor {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(MarkdownProcessor.class);
 
-  private final OpenAiAssistantsService aiService;
+  private final OpenAiResponseService aiService;
   private final MarkdownFilesConfig markdownFilesConfig;
   private final MarkdownProcessorRetryConfig markdownProcessorRetryConfig;
   private final BackOff backOff;
   private final Map<String, String> fileHashValues;
   private final Map<String, String> fileIds;
 
-  public MarkdownProcessor(OpenAiAssistantsService aiService,
+  public MarkdownProcessor(OpenAiResponseService aiService,
       MarkdownFilesConfig markdownFilesConfig,
       MarkdownProcessorRetryConfig markdownProcessorRetryConfig) {
     this.aiService = aiService;

@@ -7,7 +7,6 @@ A smart qa bot that can answer questions based on existing documents.
 ### Prerequisites
 
 1. Java 17+
-2. Milvus 2.2.0+
 
 ### Installation
 
@@ -21,18 +20,16 @@ A smart qa bot that can answer questions based on existing documents.
 
 1. Config the `markdown.files.location` to the directory of the markdown files
 2. Config the `markdown.files.scheduleEnabled` to `true` if you want to auto update the markdown files
-3. Config the `milvus.host` and `milvus.port` to the Milvus server
-4. Config the `milvus.useZillzCloud`, `milvus.zillizCloudUri` and `milvus.zillizCloudToken` if you are using Zilliz Cloud
-5. Config other parameters as needed
+3. Config other parameters as needed
 
 #### Edit the `qa-bot.conf`
 
 1. Config the `OPENAI_API_KEY` to the OpenAI API key
-2. Config the `HTTP_PROXY` to the proxy server if needed
+2. Config the `OPENAI_API_BASE_URL` to a different server if needed
 
 ```bash
 export OPENAI_API_KEY=sk-************************************************
-export HTTP_PROXY=http{s}://${username}:${password}@${url}:${port}
+export OPENAI_API_BASE_URL=https://gateway.ai.cloudflare.com/v1/xxx/ai-gateway/openai/v1/
 ```
 
 ### Usage
@@ -40,8 +37,7 @@ export HTTP_PROXY=http{s}://${username}:${password}@${url}:${port}
 1. Start the service: `./scripts/startup.sh`
 2. Stop the service: `./scripts/shutdown.sh`
 3. Check the logs: `tail -f /opt/logs/qa-bot.log`
-4. Manually trigger the markdown files processing: `curl http://${your-server-url}:9090/markdown/load`
-5. Test the QA bot via browser: `http://${your-server-url}:9090`
+4. Test the QA bot via browser: `http://${your-server-url}:9090`
 
 #### Integrate the QA bot with your website
 
