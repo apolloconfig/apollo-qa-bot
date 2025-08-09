@@ -1,65 +1,89 @@
 package com.apolloconfig.apollo.ai.qabot.openai;
 
 import com.apolloconfig.apollo.ai.qabot.config.OpenAiAssistantsConfig;
-import com.google.common.collect.Lists;
+import com.google.common.base.Strings;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
+import com.openai.client.OpenAIClient;
+import com.openai.core.http.AsyncStreamResponse;
+import com.openai.models.Reasoning;
+import com.openai.models.ReasoningEffort;
+import com.openai.models.responses.FileSearchTool;
+import com.openai.models.responses.ResponseCreateParams;
+import com.openai.models.responses.ResponseCreateParams.Builder;
+import com.openai.models.responses.ResponseStreamEvent;
 import com.theokanning.openai.ListSearchParameters;
 import com.theokanning.openai.ListSearchParameters.Order;
-import com.theokanning.openai.assistants.assistant.Assistant;
-import com.theokanning.openai.assistants.assistant.AssistantRequest;
-import com.theokanning.openai.assistants.assistant.FileSearchResources;
-import com.theokanning.openai.assistants.assistant.FileSearchTool;
-import com.theokanning.openai.assistants.assistant.ToolResources;
 import com.theokanning.openai.assistants.assistant.VectorStoreFileRequest;
-import com.theokanning.openai.assistants.message.MessageRequest;
-import com.theokanning.openai.assistants.run.RunCreateRequest;
-import com.theokanning.openai.assistants.thread.Thread;
-import com.theokanning.openai.assistants.thread.ThreadRequest;
 import com.theokanning.openai.assistants.vector_store_file.VectorStoreFile;
 import com.theokanning.openai.file.File;
 import com.theokanning.openai.service.OpenAiService;
-import com.theokanning.openai.service.assistant_stream.AssistantSSE;
-import io.reactivex.Flowable;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
+import reactor.core.publisher.Flux;
 
 @Component
-public class OpenAiAssistantsService {
+public class OpenAiResponseService {
 
-  private static final Logger LOGGER = LoggerFactory.getLogger(OpenAiAssistantsService.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(OpenAiResponseService.class);
 
   private final OpenAiService service;
-  private final Assistant assistant;
+  private final OpenAIClient client;
+  private final String model;
+  private final String instructions;
   private final String vectorStoreId;
 
-  public OpenAiAssistantsService(OpenAiAssistantsConfig config) {
-    service = OpenAiServiceFactory.getService(System.getenv("OPENAI_API_KEY"));
-    AssistantRequest request = getAssistantRequest(config);
-    this.vectorStoreId = config.getVectorStoreId();
-    assistant = service.createAssistant(request);
+  public OpenAiResponseService(OpenAiAssistantsConfig config) {
+    service = OpenAiServiceFactory.getService(System.getenv("OPENAI_API_KEY"),
+        System.getenv("OPENAI_API_BASE_URL"));
+    client = OpenAiServiceFactory.getClient(System.getenv("OPENAI_API_KEY"),
+        System.getenv("OPENAI_API_BASE_URL"));
+    model = config.getModel();
+    instructions = config.getInstructions();
+    vectorStoreId = config.getVectorStoreId();
   }
 
-  public Flowable<AssistantSSE> getAssistantMessage(String threadId, String prompt) {
-    RunCreateRequest request = new RunCreateRequest();
-    request.setAssistantId(this.assistant.getId());
-    MessageRequest messageRequest = new MessageRequest();
-    messageRequest.setContent(prompt);
-    request.setAdditionalMessages(Lists.newArrayList(messageRequest));
+  public Flux<ResponseStreamEvent> getResponseMessage(String previousResponseId, String prompt) {
+    Builder paramsBuilder = ResponseCreateParams.builder()
+        .instructions(instructions)
+        .model(model)
+        .input(prompt)
+        .reasoning(Reasoning.builder().effort(ReasoningEffort.LOW).build())
+        .addTool(FileSearchTool.builder().addVectorStoreId(vectorStoreId).build());
+    if (!Strings.isNullOrEmpty(previousResponseId)) {
+      paramsBuilder.previousResponseId(previousResponseId);
+    }
+    ResponseCreateParams responseCreateParams = paramsBuilder.build();
+    AsyncStreamResponse<ResponseStreamEvent> response = client.async()
+        .responses().createStreaming(responseCreateParams);
 
-    return this.service.createRunStream(threadId, request);
-  }
+    return Flux.create(sink -> {
+      response.subscribe(new AsyncStreamResponse.Handler<>() {
+        @Override
+        public void onNext(ResponseStreamEvent event) {
+          sink.next(event);
+        }
 
-  public Thread createThread() {
-    return this.service.createThread(new ThreadRequest());
+        @Override
+        public void onComplete(@NotNull Optional<Throwable> error) {
+          if (error.isPresent()) {
+            sink.error(error.get());
+          } else {
+            sink.complete();
+          }
+        }
+      });
+    });
   }
 
   public Map<String, String> getVectorStoreFileIds() {
@@ -129,19 +153,4 @@ public class OpenAiAssistantsService {
   public String getFileName(String fileId) {
     return this.service.retrieveFile(fileId).getFilename();
   }
-
-  private AssistantRequest getAssistantRequest(OpenAiAssistantsConfig config) {
-    AssistantRequest request = new AssistantRequest();
-    request.setModel(config.getModel());
-    request.setName(config.getName());
-    request.setInstructions(config.getInstructions());
-    request.setTools(Lists.newArrayList(new FileSearchTool()));
-    ToolResources toolResources = new ToolResources();
-    FileSearchResources fileSearchResources = new FileSearchResources();
-    fileSearchResources.setVectorStoreIds(Lists.newArrayList(config.getVectorStoreId()));
-    toolResources.setFileSearch(fileSearchResources);
-    request.setToolResources(toolResources);
-    return request;
-  }
-
 }
