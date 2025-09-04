@@ -34,26 +34,34 @@ public class QAWithResponseController {
 
   @GetMapping(produces = MediaType.TEXT_EVENT_STREAM_VALUE)
   public Flux<Answer> qa(@RequestParam String question,
-      @RequestParam(required = false, defaultValue = "") String threadId) {
+      @RequestParam(name = "threadId", required = false, defaultValue = "") String conversationId) {
     question = question.trim();
     if (Strings.isNullOrEmpty(question)) {
       return Flux.just(Answer.EMPTY);
     }
 
+    if (Strings.isNullOrEmpty(conversationId)) {
+      conversationId = getConversationId();
+    }
+
     try {
-      return doQA(threadId, question);
+      return doQA(conversationId, question);
     } catch (Throwable exception) {
       LOGGER.error("Error while calling Assistants API", exception);
       return Flux.just(Answer.ERROR);
     }
   }
 
-  private Flux<Answer> doQA(String threadId, String question) {
+  private String getConversationId() {
+    return aiService.createConversation().id();
+  }
+
+  private Flux<Answer> doQA(String conversationId, String question) {
     if (LOGGER.isDebugEnabled()) {
       LOGGER.debug("\nPrompt message: {}", question);
     }
 
-    Flux<ResponseStreamEvent> result = aiService.getResponseMessage(threadId, question);
+    Flux<ResponseStreamEvent> result = aiService.getResponseMessage(conversationId, question);
 
     return result.filter(
             responseStreamEvent -> responseStreamEvent.isOutputTextDelta()
@@ -67,13 +75,13 @@ public class QAWithResponseController {
             return getAnswerFromOutputTextDelta(responseStreamEvent.outputTextDelta().get());
           } else if (responseStreamEvent.isCompleted() && responseStreamEvent.completed()
               .isPresent()) {
-            return getAnswerFromCompleted(responseStreamEvent.completed().get());
+            return getAnswerFromCompleted(conversationId, responseStreamEvent.completed().get());
           }
           return Answer.EMPTY;
         }).onErrorReturn(Answer.ERROR);
   }
 
-  private @NotNull Answer getAnswerFromCompleted(ResponseCompletedEvent responseCompletedEvent) {
+  private @NotNull Answer getAnswerFromCompleted(String conversationId, ResponseCompletedEvent responseCompletedEvent) {
     Set<String> relatedFiles = responseCompletedEvent.response().output().stream()
         .filter(responseOutputItem -> responseOutputItem.isMessage()
             && responseOutputItem.message().isPresent())
@@ -93,7 +101,7 @@ public class QAWithResponseController {
           return fileName;
         })
         .collect(Collectors.toSet());
-    return new Answer(END_SYMBOL, responseCompletedEvent.response().id(), relatedFiles);
+    return new Answer(END_SYMBOL, conversationId, relatedFiles);
   }
 
   private @NotNull Answer getAnswerFromOutputTextDelta(
