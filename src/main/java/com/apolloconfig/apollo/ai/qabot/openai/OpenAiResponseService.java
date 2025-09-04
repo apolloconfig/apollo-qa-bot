@@ -8,6 +8,8 @@ import com.openai.client.OpenAIClient;
 import com.openai.core.http.AsyncStreamResponse;
 import com.openai.models.Reasoning;
 import com.openai.models.ReasoningEffort;
+import com.openai.models.conversations.Conversation;
+import com.openai.models.conversations.ConversationCreateParams;
 import com.openai.models.responses.FileSearchTool;
 import com.openai.models.responses.ResponseCreateParams;
 import com.openai.models.responses.ResponseCreateParams.Builder;
@@ -53,15 +55,15 @@ public class OpenAiResponseService {
     vectorStoreId = config.getVectorStoreId();
   }
 
-  public Flux<ResponseStreamEvent> getResponseMessage(String previousResponseId, String prompt) {
+  public Flux<ResponseStreamEvent> getResponseMessage(String conversationId, String prompt) {
     Builder paramsBuilder = ResponseCreateParams.builder()
         .instructions(instructions)
         .model(model)
         .input(prompt)
         .reasoning(Reasoning.builder().effort(ReasoningEffort.LOW).build())
         .addTool(FileSearchTool.builder().addVectorStoreId(vectorStoreId).build());
-    if (!Strings.isNullOrEmpty(previousResponseId)) {
-      paramsBuilder.previousResponseId(previousResponseId);
+    if (!Strings.isNullOrEmpty(conversationId)) {
+      paramsBuilder.conversation(conversationId);
     }
     ResponseCreateParams responseCreateParams = paramsBuilder.build();
     AsyncStreamResponse<ResponseStreamEvent> response = client.async()
@@ -150,7 +152,7 @@ public class OpenAiResponseService {
     this.service.deleteFile(fileId);
   }
 
-  public String getFileName(String fileId) {
-    return this.service.retrieveFile(fileId).getFilename();
+  public Conversation createConversation() {
+    return this.client.conversations().create(ConversationCreateParams.builder().build());
   }
 }
